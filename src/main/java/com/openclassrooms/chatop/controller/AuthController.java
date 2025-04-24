@@ -13,11 +13,14 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestController
@@ -70,6 +73,43 @@ public class AuthController {
         } catch (AuthenticationException e) {
             log.error("Erreur tout en essayant d'authentifier l'utilisateur {}", user.getEmail(), e);
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Les identifiants saisies ne sont pas valides");
+        }
+    }
+
+    /**
+     * Retrieves the details of the authenticated user based on the provided
+     * Authorization header containing a Bearer JWT token.
+     *
+     * @param authorizationHeader the Authorization header containing the Bearer JWT token
+     * @return a ResponseEntity containing the user's details
+     */
+    @GetMapping("/me")
+    public ResponseEntity<?> getMe(@RequestHeader("Authorization") String authorizationHeader) {
+        try {
+            if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token JWT manquant ou invalide");
+            }
+
+            String token = authorizationHeader.substring(7);
+            String email = jwtUtils.extractEmail(token);
+
+            User user = userRepository.findByEmail(email);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Utilisateur non trouvé");
+            }
+
+            Map<String, Object> userData = new LinkedHashMap<>();
+            userData.put("id", user.getId());
+            userData.put("name", user.getName());
+            userData.put("email", user.getEmail());
+            userData.put("role", user.getRole());
+            userData.put("created_at", user.getCreatedAt());
+            userData.put("updated_at", user.getUpdatedAt());
+
+            return ResponseEntity.ok(userData);
+        } catch (Exception e) {
+            log.error("Erreur lors de la récupération de l'utilisateur via /me", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erreur interne");
         }
     }
 }

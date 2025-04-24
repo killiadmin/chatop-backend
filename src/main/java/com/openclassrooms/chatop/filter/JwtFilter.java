@@ -28,8 +28,9 @@ public class JwtFilter extends OncePerRequestFilter {
      * These routes are excluded from JWT validation in the filtering process.
      */
     private static final List<String> PUBLIC_ROUTES = List.of(
-            "/api/auth/register",
-            "/api/auth/login"
+            "/api/auth/login",
+            "/api/auth/me",
+            "/api/auth/register"
     );
 
     /**
