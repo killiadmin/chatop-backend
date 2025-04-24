@@ -5,16 +5,16 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.openclassrooms.chatop.model.User;
-import com.openclassrooms.chatop.service.UserService;
+import com.openclassrooms.chatop.service.CustomUserDetailsService;
 
 @RestController
 public class UserController {
 
     @Autowired
-    private UserService userService;
+    private CustomUserDetailsService customUserDetailsService;
 
     @GetMapping("/users")
     public Iterable<User> getUsers() {
-        return userService.getUsers();
+        return customUserDetailsService.getUsers();
     }
 }

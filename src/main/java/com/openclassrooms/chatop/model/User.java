@@ -32,6 +32,9 @@ public class User {
     @Column(name = "password", nullable = false, length = 255)
     private String password;
 
+    @Column(name = "role", nullable = false, length = 255)
+    private String role = "ROLE_USER";
+
     @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP", nullable = false)
     @CreationTimestamp
     private LocalDateTime createdAt;
