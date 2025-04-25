@@ -104,6 +104,11 @@
 			<artifactId>hibernate-validator</artifactId>
 			<version>8.0.0.Final</version> <!-- Version compatible avec Java 21 -->
 		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+		</dependency>
+
 	</dependencies>
 
 	<build>
