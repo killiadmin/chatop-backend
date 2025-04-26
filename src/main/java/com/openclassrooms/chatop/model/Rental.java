@@ -40,7 +40,7 @@ public class Rental {
     private BigDecimal price;
 
     @Lob
-    @Column(name = "picture", columnDefinition = "BLOB")
+    @Column(name = "picture", columnDefinition = "LONGBLOB")
     private byte[] picture;
 
     @Column(name = "description", columnDefinition = "TEXT", length = 5000)
@@ -48,11 +48,11 @@ public class Rental {
 
     @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP", nullable = false)
     @CreationTimestamp
-    private LocalDateTime createdAt;
+    private LocalDateTime created_at;
 
     @Column(name = "updated_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP", nullable = false)
     @UpdateTimestamp
-    private LocalDateTime updatedAt;
+    private LocalDateTime updated_at;
 
     /**
      * Retrieves the ID of the owner associated with this rental.
@@ -61,5 +61,13 @@ public class Rental {
      */
     public Long getOwnerId() {
         return this.owner != null ? this.owner.getId() : null;
+    }
+
+    public Object getCreatedAt() {
+        return this.created_at;
+    }
+
+    public Object getUpdatedAt() {
+        return this.updated_at;
     }
 }

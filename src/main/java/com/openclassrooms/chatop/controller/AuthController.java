@@ -139,8 +139,8 @@ public class AuthController {
             userDetails.put("name", user.getName());
             userDetails.put("email", user.getEmail());
             userDetails.put("role", user.getRole());
-            userDetails.put("createdAt", user.getCreatedAt());
-            userDetails.put("updatedAt", user.getUpdatedAt());
+            userDetails.put("created_at", user.getCreatedAt());
+            userDetails.put("updated_at", user.getUpdatedAt());
 
             return ResponseEntity.ok(userDetails);
         } catch (Exception e) {

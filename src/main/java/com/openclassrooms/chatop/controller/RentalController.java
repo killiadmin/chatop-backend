@@ -1,5 +1,6 @@
 package com.openclassrooms.chatop.controller;
 
+import com.openclassrooms.chatop.mapper.RentalMapper;
 import com.openclassrooms.chatop.model.Rental;
 import com.openclassrooms.chatop.model.User;
 import com.openclassrooms.chatop.repository.UserRepository;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -31,24 +33,30 @@ public class RentalController {
     }
 
     @GetMapping("")
-    public ResponseEntity<Map<String, List<Rental>>> getRentals() {
+    public ResponseEntity<Map<String, List<RentalMapper>>> getRentals() {
         List<Rental> rentals = (List<Rental>) customRentalDetailsService.getRentals();
-        Map<String, List<Rental>> response = Map.of("rentals", rentals);
+
+        List<RentalMapper> rentalDtos = rentals.stream()
+                .map(this::mapRentalToDto)
+                .toList();
+
+        Map<String, List<RentalMapper>> response = Map.of("rentals", rentalDtos);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Optional<Rental>> getRental(@PathVariable Long id) {
-        Optional<Rental> rental = customRentalDetailsService.getRental(id);
+    public ResponseEntity<RentalMapper> getRental(@PathVariable Long id) {
+        Optional<Rental> rentalOpt = customRentalDetailsService.getRental(id);
 
-        if (rental.isEmpty()) {
+        if (rentalOpt.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
 
-        return ResponseEntity.ok(rental);
+        RentalMapper rentalDto = mapRentalToDto(rentalOpt.get());
+        return ResponseEntity.ok(rentalDto);
     }
 
-    @PostMapping("/create")
+    @PostMapping("")
     public ResponseEntity<String> createRental(
             @RequestParam("name") String name,
             @RequestParam("surface") Integer surface,
@@ -73,7 +81,7 @@ public class RentalController {
             rental.setOwner(currentUser);
 
             if (picture != null && !picture.isEmpty()) {
-                rental.setPicture(picture.getBytes());
+                rental.setPicture(picture.getBytes()); // Pas de base64 ici !!
             }
 
             customRentalDetailsService.saveRental(rental);
@@ -83,5 +91,26 @@ public class RentalController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Erreur lors de la création de la location.");
         }
+    }
+
+    private RentalMapper mapRentalToDto(Rental rental) {
+        RentalMapper dto = new RentalMapper();
+        dto.setId(rental.getId());
+        dto.setName(rental.getName());
+        dto.setSurface(rental.getSurface());
+        dto.setPrice(rental.getPrice());
+        dto.setDescription(rental.getDescription());
+        dto.setCreatedAt(rental.getCreatedAt());
+        dto.setUpdatedAt(rental.getUpdatedAt());
+        dto.setOwnerId(rental.getOwner().getId());
+
+        if (rental.getPicture() != null) {
+            String base64Image = Base64.getEncoder().encodeToString(rental.getPicture());
+            dto.setPicture("data:image/jpeg;base64," + base64Image);
+        } else {
+            dto.setPicture(null);
+        }
+
+        return dto;
     }
 }
