@@ -10,10 +10,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/rentals")
@@ -35,6 +35,17 @@ public class RentalController {
         List<Rental> rentals = (List<Rental>) customRentalDetailsService.getRentals();
         Map<String, List<Rental>> response = Map.of("rentals", rentals);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Optional<Rental>> getRental(@PathVariable Long id) {
+        Optional<Rental> rental = customRentalDetailsService.getRental(id);
+
+        if (rental.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+
+        return ResponseEntity.ok(rental);
     }
 
     @PostMapping("/create")

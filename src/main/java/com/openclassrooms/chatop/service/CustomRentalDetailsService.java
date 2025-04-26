@@ -18,6 +18,7 @@ public class CustomRentalDetailsService {
     public Iterable<Rental> getRentals() {
         return rentalRepository.findAll();
     }
+
     public Optional<Rental> getRental(final Long id) {
         return rentalRepository.findById(id);
     }
