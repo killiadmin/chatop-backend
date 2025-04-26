@@ -1,13 +1,6 @@
 package com.openclassrooms.chatop.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
@@ -46,8 +39,9 @@ public class Rental {
     @DecimalMin(value = "0.0", inclusive = false, message = "Le prix doit être supérieur à 0")
     private BigDecimal price;
 
-    @Column(name = "picture", columnDefinition = "TEXT", length = 1000)
-    private String picture;
+    @Lob
+    @Column(name = "picture", columnDefinition = "BLOB")
+    private byte[] picture;
 
     @Column(name = "description", columnDefinition = "TEXT", length = 5000)
     private String description;
