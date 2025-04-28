@@ -1,35 +1,38 @@
 package com.openclassrooms.chatop.mapper;
 
+import com.openclassrooms.chatop.dto.RentalDTO;
+import com.openclassrooms.chatop.model.Rental;
+import org.springframework.stereotype.Component;
 
-import lombok.Getter;
-import lombok.Setter;
+import java.util.Base64;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-
-@Setter
-@Getter
+@Component
 public class RentalMapper {
 
-    private Long id;
-    private String name;
-    private Integer surface;
-    private BigDecimal price;
-    private String description;
-    private String picture;
-    private Long owner_id;
-    private LocalDateTime created_at;
-    private LocalDateTime updated_at;
+    /**
+     * Converts a Rental entity to its corresponding RentalDTO.
+     *
+     * @param rental the Rental entity to be converted
+     * @return the converted RentalDTO object
+     */
+    public RentalDTO toDTO(Rental rental) {
+        RentalDTO rentalDTO = new RentalDTO();
+        rentalDTO.setId(rental.getId());
+        rentalDTO.setName(rental.getName());
+        rentalDTO.setSurface(rental.getSurface());
+        rentalDTO.setPrice(rental.getPrice());
+        rentalDTO.setDescription(rental.getDescription());
+        rentalDTO.setOwnerId(rental.getOwner() != null ? rental.getOwner().getId() : null);
+        rentalDTO.setCreatedAt(rental.getCreated_at());
+        rentalDTO.setUpdatedAt(rental.getUpdated_at());
 
-    public void setCreatedAt(Object createdAt) {
-        this.created_at = (LocalDateTime) createdAt;
-    }
+        if (rental.getPicture() != null) {
+            String base64Image = Base64.getEncoder().encodeToString(rental.getPicture());
+            rentalDTO.setPicture("data:image/jpeg;base64," + base64Image);
+        } else {
+            rentalDTO.setPicture(null);
+        }
 
-    public void setUpdatedAt(Object updatedAt) {
-        this.updated_at = (LocalDateTime) updatedAt;
-    }
-
-    public void setOwnerId(Long id) {
-        this.owner_id = id;
+        return rentalDTO;
     }
 }

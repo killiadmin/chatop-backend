@@ -1,10 +1,12 @@
 package com.openclassrooms.chatop.controller;
 
+import com.openclassrooms.chatop.dto.RentalDTO;
 import com.openclassrooms.chatop.mapper.RentalMapper;
 import com.openclassrooms.chatop.model.Rental;
 import com.openclassrooms.chatop.model.User;
 import com.openclassrooms.chatop.repository.UserRepository;
 import com.openclassrooms.chatop.service.CustomRentalDetailsService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -12,52 +14,63 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
-import java.util.Base64;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/rentals")
+@RequiredArgsConstructor
 public class RentalController {
 
     private final CustomRentalDetailsService customRentalDetailsService;
     private final UserRepository userRepository;
+    private final RentalMapper rentalMapper;
 
-    public RentalController(
-            CustomRentalDetailsService customRentalDetailsService,
-            UserRepository userRepository
-    ) {
-        this.customRentalDetailsService = customRentalDetailsService;
-        this.userRepository = userRepository;
-    }
-
+    /**
+     * Retrieves the list of all rentals and maps them to their DTO representation.
+     *
+     * @return a ResponseEntity containing a map with a single key "rentals"
+     */
     @GetMapping("")
-    public ResponseEntity<Map<String, List<RentalMapper>>> getRentals() {
+    public ResponseEntity<Map<String, List<RentalDTO>>> getRentals() {
         List<Rental> rentals = (List<Rental>) customRentalDetailsService.getRentals();
 
-        List<RentalMapper> rentalDtos = rentals.stream()
-                .map(this::mapRentalToDto)
+        List<RentalDTO> rentalDtos = rentals.stream()
+                .map(rentalMapper::toDTO)
                 .toList();
 
-        Map<String, List<RentalMapper>> response = Map.of("rentals", rentalDtos);
+        Map<String, List<RentalDTO>> response = Map.of("rentals", rentalDtos);
         return ResponseEntity.ok(response);
     }
 
+
+    /**
+     * Retrieves the rental details for the specified rental ID.
+     *
+     * @param id the ID of the rental to retrieve
+     * @return a ResponseEntity containing the rental details
+     */
     @GetMapping("/{id}")
-    public ResponseEntity<RentalMapper> getRental(@PathVariable Long id) {
-        Optional<Rental> rentalOpt = customRentalDetailsService.getRental(id);
-
-        if (rentalOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
-
-        RentalMapper rentalDto = mapRentalToDto(rentalOpt.get());
-        return ResponseEntity.ok(rentalDto);
+    public ResponseEntity<RentalDTO> getRental(@PathVariable Long id) {
+        return customRentalDetailsService.getRental(id)
+                .map(rentalMapper::toDTO)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
+    /**
+     * Creates a new rental and associates it with the authenticated user.
+     *
+     * @param name the name of the rental
+     * @param surface the surface area of the rental in square meters
+     * @param price the price of the rental
+     * @param description a description of the rental
+     * @param picture an optional picture file for the rental
+     * @param authentication the authentication object containing the credentials of the current user
+     * @return a ResponseEntity with a message indicating success or failure, and appropriate HTTP status
+     */
     @PostMapping("")
-    public ResponseEntity<String> createRental(
+    public ResponseEntity<Map<String, String>> createRental(
             @RequestParam("name") String name,
             @RequestParam("surface") Integer surface,
             @RequestParam("price") BigDecimal price,
@@ -70,7 +83,8 @@ public class RentalController {
             User currentUser = userRepository.findByEmail(email);
 
             if (currentUser == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Utilisateur non authentifié.");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "User not authenticated"));
             }
 
             Rental rental = new Rental();
@@ -81,36 +95,16 @@ public class RentalController {
             rental.setOwner(currentUser);
 
             if (picture != null && !picture.isEmpty()) {
-                rental.setPicture(picture.getBytes()); // Pas de base64 ici !!
+                rental.setPicture(picture.getBytes());
             }
 
             customRentalDetailsService.saveRental(rental);
 
-            return ResponseEntity.ok("Rental créé et image sauvegardée !");
+            return ResponseEntity.ok(Map.of("message", "Rental created"));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Erreur lors de la création de la location.");
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Error when creating the rental"));
         }
-    }
-
-    private RentalMapper mapRentalToDto(Rental rental) {
-        RentalMapper dto = new RentalMapper();
-        dto.setId(rental.getId());
-        dto.setName(rental.getName());
-        dto.setSurface(rental.getSurface());
-        dto.setPrice(rental.getPrice());
-        dto.setDescription(rental.getDescription());
-        dto.setCreatedAt(rental.getCreatedAt());
-        dto.setUpdatedAt(rental.getUpdatedAt());
-        dto.setOwnerId(rental.getOwner().getId());
-
-        if (rental.getPicture() != null) {
-            String base64Image = Base64.getEncoder().encodeToString(rental.getPicture());
-            dto.setPicture("data:image/jpeg;base64," + base64Image);
-        } else {
-            dto.setPicture(null);
-        }
-
-        return dto;
     }
 }
