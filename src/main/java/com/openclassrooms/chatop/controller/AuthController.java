@@ -1,6 +1,8 @@
 package com.openclassrooms.chatop.controller;
 
 import com.openclassrooms.chatop.configuration.JwtUtils;
+import com.openclassrooms.chatop.dto.UserDTO;
+import com.openclassrooms.chatop.mapper.UserMapper;
 import com.openclassrooms.chatop.model.User;
 import com.openclassrooms.chatop.repository.UserRepository;
 
@@ -33,6 +35,7 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
 
     /**
      * Authenticates a user based on the provided credentials and generates a JWT token upon successful authentication.
@@ -131,22 +134,16 @@ public class AuthController {
             User user = userRepository.findByEmail(email);
             if (user == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body("Utilisateur non trouvé.");
+                        .body("User not found.");
             }
 
-            Map<String, Object> userDetails = new LinkedHashMap<>();
-            userDetails.put("id", user.getId());
-            userDetails.put("name", user.getName());
-            userDetails.put("email", user.getEmail());
-            userDetails.put("role", user.getRole());
-            userDetails.put("created_at", user.getCreatedAt());
-            userDetails.put("updated_at", user.getUpdatedAt());
+            UserDTO userDTO = userMapper.toDTO(user);
+            return ResponseEntity.ok(userDTO);
 
-            return ResponseEntity.ok(userDetails);
         } catch (Exception e) {
-            log.error("Erreur lors de la récupération des informations utilisateur : {}", e.getMessage());
+            log.error("Error when recovering user information: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Une erreur est survenue.");
+                    .body("An error occurred.");
         }
     }
 

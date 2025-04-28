@@ -1,6 +1,5 @@
 package com.openclassrooms.chatop.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -35,11 +34,9 @@ public class User implements UserDetails {
     @Column(name = "email", unique = true, nullable = false, length = 255)
     private String email;
 
-    @JsonIgnore
     @Column(name = "password", nullable = false, length = 255)
     private String password;
 
-    @JsonIgnore
     @Column(name = "role", nullable = false, length = 255)
     private String role = "USER";
 
@@ -79,13 +76,5 @@ public class User implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
-    }
-
-    public Object getCreatedAt() {
-        return this.created_at;
-    }
-
-    public Object getUpdatedAt() {
-        return this.updated_at;
     }
 }
