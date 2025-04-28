@@ -107,4 +107,69 @@ public class RentalController {
                     .body(Map.of("message", "Error when creating the rental"));
         }
     }
+
+    /**
+     * Updates an existing rental with the specified details.
+     *
+     * @param id the ID of the rental to update
+     * @param name the new name of the rental
+     * @param surface the new surface area of the rental in square meters
+     * @param price the new price of the rental
+     * @param description the new description of the rental
+     * @param authentication the authentication object containing the credentials of the current user
+     * @return a ResponseEntity containing a map
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<Map<String, String>> updateRental(
+            @PathVariable Long id,
+            @RequestParam("name") String name,
+            @RequestParam("surface") Integer surface,
+            @RequestParam("price") BigDecimal price,
+            @RequestParam("description") String description,
+            Authentication authentication
+    ) {
+        try {
+            if (authentication == null || authentication.getName() == null) {
+                return ResponseEntity
+                        .status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "Access denied: user is not authenticated"));
+            }
+
+            String email = authentication.getName();
+
+            User currentUser = userRepository.findByEmail(email);
+            if (currentUser == null) {
+                return ResponseEntity
+                        .status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "User not authenticated"));
+            }
+
+            Rental rental = customRentalDetailsService.getRental(id).orElse(null);
+            if (rental == null) {
+                return ResponseEntity
+                        .status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "Rental not found"));
+            }
+
+            if (!rental.getOwner().getId().equals(currentUser.getId())) {
+                return ResponseEntity
+                        .status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "You are not allowed to modify this rental"));
+            }
+
+            rental.setName(name);
+            rental.setSurface(surface);
+            rental.setPrice(price);
+            rental.setDescription(description);
+
+            customRentalDetailsService.updateRental(rental);
+
+            return ResponseEntity
+                    .ok(Map.of("message", "Rental updated !"));
+        } catch (Exception e) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Error when updating the rental"));
+        }
+    }
 }

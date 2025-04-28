@@ -22,9 +22,9 @@ public class RentalMapper {
         rentalDTO.setSurface(rental.getSurface());
         rentalDTO.setPrice(rental.getPrice());
         rentalDTO.setDescription(rental.getDescription());
-        rentalDTO.setOwnerId(rental.getOwner() != null ? rental.getOwner().getId() : null);
-        rentalDTO.setCreatedAt(rental.getCreated_at());
-        rentalDTO.setUpdatedAt(rental.getUpdated_at());
+        rentalDTO.setOwner_id(rental.getOwner() != null ? rental.getOwner().getId() : null);
+        rentalDTO.setCreated_at(rental.getCreated_at());
+        rentalDTO.setUpdated_at(rental.getUpdated_at());
 
         if (rental.getPicture() != null) {
             String base64Image = Base64.getEncoder().encodeToString(rental.getPicture());

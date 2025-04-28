@@ -23,8 +23,8 @@ public class CustomRentalDetailsService {
         return rentalRepository.findById(id);
     }
 
-    public Rental updateRental(Rental rental) {
-        return rentalRepository.save(rental);
+    public void updateRental(Rental rental) {
+        rentalRepository.save(rental);
     }
 
     public void deleteRental(final Long id) {
