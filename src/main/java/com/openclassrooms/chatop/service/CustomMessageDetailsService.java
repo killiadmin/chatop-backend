@@ -3,11 +3,11 @@ package com.openclassrooms.chatop.service;
 import com.openclassrooms.chatop.model.Message;
 
 import com.openclassrooms.chatop.repository.MessageRepository;
+
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import org.springframework.stereotype.Service;
 
 @Data
 @Service
@@ -16,19 +16,13 @@ public class CustomMessageDetailsService {
 
     private final MessageRepository messageRepository;
 
-    public Iterable<Message> getMessages() {
-        return messageRepository.findAll();
-    }
-
-    public Optional<Message> getMessage(final Long id) {
-        return messageRepository.findById(id);
-    }
-
-    public Message saveMessage(Message message) {
-        return messageRepository.save(message);
-    }
-
-    public void deleteMessage(final Long id) {
-        messageRepository.deleteById(id);
+    /**
+     * Saves the provided message entity into the repository.
+     *
+     * @param message the message to be saved, containing user details, rental information,
+     *                and the content of the message
+     */
+    public void saveMessage(Message message) {
+        messageRepository.save(message);
     }
 }
