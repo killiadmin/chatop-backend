@@ -1,11 +1,14 @@
 package com.openclassrooms.chatop.controller;
 
 import com.openclassrooms.chatop.configuration.JwtUtils;
+import com.openclassrooms.chatop.dto.LoginDTO;
+import com.openclassrooms.chatop.dto.RegisterDTO;
 import com.openclassrooms.chatop.dto.UserDTO;
 import com.openclassrooms.chatop.mapper.UserMapper;
 import com.openclassrooms.chatop.model.User;
 import com.openclassrooms.chatop.repository.UserRepository;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,7 +25,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RestController
@@ -38,17 +40,17 @@ public class AuthController {
     private final UserMapper userMapper;
 
     /**
-     * Authenticates a user based on the provided credentials and generates a JWT token upon successful authentication.
+     * Authenticates a user using the provided credentials and generates a JWT token upon successful authentication.
      *
-     * @param credentials a map containing the user's email and password.
+     * @param loginDTO the login data transfer object containing the user's email and password for authentication.
      *
      * @return a {@code ResponseEntity}
      */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> credentials) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginDTO loginDTO) {
         try {
-            String email = extractCredential(credentials, "email");
-            String password = extractCredential(credentials, "password");
+            String email = loginDTO.getEmail();
+            String password = loginDTO.getPassword();
 
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, password)
@@ -56,39 +58,39 @@ public class AuthController {
 
             String token = jwtUtils.generateToken(authentication);
 
-            return ResponseEntity.ok(buildLoginResponse(token));
+            return ResponseEntity.ok(Collections.singletonMap("token", token));
         } catch (AuthenticationException e) {
-            log.error("Erreur d'authentification : {}", e.getMessage());
+            log.error("Authentication error : {}", e.getMessage());
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
-                    .body("Identifiants incorrects !");
+                    .body("Incorrect identifiers !");
         }
     }
 
     /**
-     * Registers a new user using the provided user data.
+     * Handles the user registration process by validating the input.
      *
-     * @param userData a map containing user registration data.
-     *
+     * @param request the registration data containing email, password, and name, provided as a {@code RegisterDTO}.
+     *                Must be a valid and non-null object.
      * @return a {@code ResponseEntity}
      */
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody Map<String, String> userData) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterDTO request) {
         try {
-            String email = userData.get("email");
-            String password = userData.get("password");
-            String name = userData.get("name");
+            String email = request.getEmail();
+            String password = request.getPassword();
+            String name = request.getName();
 
             if (email == null || email.trim().isEmpty() || password == null || password.trim().isEmpty() || name == null || name.trim().isEmpty()) {
                 return ResponseEntity
                         .status(HttpStatus.BAD_REQUEST)
-                        .body("Tous les champs (email, password, name) sont obligatoires.");
+                        .body("All fields (email, password, name) are required.");
             }
 
             if (userRepository.findByEmail(email) != null) {
                 return ResponseEntity
                         .status(HttpStatus.CONFLICT)
-                        .body("Un utilisateur avec cet email existe déjà !");
+                        .body("A user with this email already exists !");
             }
 
             String encodedPassword = passwordEncoder.encode(password);
@@ -112,10 +114,10 @@ public class AuthController {
                     .status(HttpStatus.CREATED)
                     .body(response);
         } catch (Exception e) {
-            log.error("Erreur lors de l'enregistrement : {}", e.getMessage());
+            log.error("Error when register : {}", e.getMessage());
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Une erreur est survenue lors de l'inscription.");
+                    .body("An error occurred during registration.");
         }
     }
 
@@ -130,43 +132,21 @@ public class AuthController {
     public ResponseEntity<?> getUserDetails(Authentication authentication) {
         try {
             String email = authentication.getName();
-
             User user = userRepository.findByEmail(email);
+
             if (user == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                return ResponseEntity
+                        .status(HttpStatus.NOT_FOUND)
                         .body("User not found.");
             }
 
             UserDTO userDTO = userMapper.toDTO(user);
             return ResponseEntity.ok(userDTO);
-
         } catch (Exception e) {
             log.error("Error when recovering user information: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("An error occurred.");
         }
-    }
-
-    /**
-     * Extracts a credential value from the provided map of credentials using the specified key.
-     *
-     * @param credentials a map containing user credentials as key-value pairs
-     * @param key the key whose corresponding value needs to be extracted
-     *
-     * @return the value associated with the specified key, or an empty string if the key does not exist
-     */
-    private String extractCredential(Map<String, String> credentials, String key) {
-        return credentials.getOrDefault(key, "");
-    }
-
-    /**
-     * Builds a response containing a single token entry.
-     *
-     * @param token the JWT token to be included in the response
-     *
-     * @return a map with a single key-value pair where the key is "token" and the value is the provided token
-     */
-    private Map<String, String> buildLoginResponse(String token) {
-        return Collections.singletonMap("token", token);
     }
 }
