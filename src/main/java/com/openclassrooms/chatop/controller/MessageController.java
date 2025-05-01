@@ -1,10 +1,10 @@
 package com.openclassrooms.chatop.controller;
 
+import com.openclassrooms.chatop.dto.MessageDTO;
+
 import com.openclassrooms.chatop.model.Message;
 import com.openclassrooms.chatop.model.Rental;
 import com.openclassrooms.chatop.model.User;
-
-import com.openclassrooms.chatop.payload.request.MessageRequest;
 
 import com.openclassrooms.chatop.service.CustomMessageDetailsService;
 import com.openclassrooms.chatop.service.CustomRentalDetailsService;
@@ -30,25 +30,24 @@ public class MessageController {
     private final CustomMessageDetailsService customMessageDetailsService;
 
     /**
-     * Handles the creation of a new message.
+     * Handles the creation of a new message using the provided message data.
      *
-     * @param request the message request containing rental ID, user ID, and the
-     *                message content
-     * @return a ResponseEntity containing a map with a message and the HTTP status.
-     *
+     * @param messageDTO the data transfer object containing the message details,
+     *                   including rental ID, user ID, and the message content
+     * @return a ResponseEntity containing a map with a status message
      */
     @PostMapping("")
     public ResponseEntity<Map<String, String>> createMessage(
-            @RequestBody MessageRequest request
+            @RequestBody MessageDTO messageDTO
     ) {
         try {
-            if (request.getRental_id() == null || request.getUser_id() == null) {
+            if (messageDTO.getRental_id() == null || messageDTO.getUser_id() == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Map.of("message", "User not authenticated !"));
             }
 
-            Optional<User> userOptional = customUserDetailsService.getUser(Long.valueOf(request.getUser_id()));
-            Optional<Rental> rentalOptional = customRentalDetailsService.getRental(Long.valueOf(request.getRental_id()));
+            Optional<User> userOptional = customUserDetailsService.getUser(Long.valueOf(messageDTO.getUser_id()));
+            Optional<Rental> rentalOptional = customRentalDetailsService.getRental(Long.valueOf(messageDTO.getRental_id()));
 
             if (userOptional.isEmpty() || rentalOptional.isEmpty()) {
                 return ResponseEntity
@@ -56,7 +55,7 @@ public class MessageController {
                         .body(Map.of("message", "User or Rental not found !"));
             }
 
-            if (request.getMessage().isEmpty()) {
+            if (messageDTO.getMessage().isEmpty()) {
                 return ResponseEntity
                         .status(HttpStatus.BAD_REQUEST)
                         .body(Map.of("message", "Message is empty !"));
@@ -68,7 +67,7 @@ public class MessageController {
             Message message = new Message();
             message.setUser(user);
             message.setRental(rental);
-            message.setMessage(request.getMessage());
+            message.setMessage(messageDTO.getMessage());
 
             customMessageDetailsService.saveMessage(message);
 
