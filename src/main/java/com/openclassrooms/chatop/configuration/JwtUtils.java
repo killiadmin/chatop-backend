@@ -1,7 +1,8 @@
 package com.openclassrooms.chatop.configuration;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
+
+import org.springframework.beans.factory.annotation.Value;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
@@ -17,19 +18,25 @@ public class JwtUtils {
 
     private final JwtEncoder jwtEncoder;
 
+    @Value("${app.jwt.expiration}")
+    private long jwtExpirationInSeconds;
+
     public JwtUtils(JwtEncoder jwtEncoder) {
         this.jwtEncoder = jwtEncoder;
     }
 
     public String generateToken(Authentication authentication) {
         Instant now = Instant.now();
+
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer("self")
                 .issuedAt(now)
-                .expiresAt(now.plus(1, ChronoUnit.DAYS))
+                .expiresAt(now.plusSeconds(jwtExpirationInSeconds))
                 .subject(authentication.getName())
                 .build();
-        JwtEncoderParameters jwtEncoderParameters = JwtEncoderParameters.from(JwsHeader.with(MacAlgorithm.HS256).build(), claims);
-        return this.jwtEncoder.encode(jwtEncoderParameters).getTokenValue();
+
+        return jwtEncoder.encode(JwtEncoderParameters.from(
+                JwsHeader.with(MacAlgorithm.HS256).build(), claims)
+        ).getTokenValue();
     }
 }

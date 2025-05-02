@@ -47,7 +47,7 @@ public class AuthController {
      * @return a {@code ResponseEntity}
      */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginDTO loginDTO) {
+    public ResponseEntity<Map<String, String>> login(@Valid @RequestBody LoginDTO loginDTO) {
         try {
             String email = loginDTO.getEmail();
             String password = loginDTO.getPassword();
@@ -63,7 +63,7 @@ public class AuthController {
             log.error("Authentication error : {}", e.getMessage());
             return ResponseEntity
                     .status(HttpStatus.UNAUTHORIZED)
-                    .body("Incorrect identifiers !");
+                    .body(Map.of("message", "error"));
         }
     }
 
@@ -84,7 +84,7 @@ public class AuthController {
             if (email == null || email.trim().isEmpty() || password == null || password.trim().isEmpty() || name == null || name.trim().isEmpty()) {
                 return ResponseEntity
                         .status(HttpStatus.BAD_REQUEST)
-                        .body("All fields (email, password, name) are required.");
+                        .body(Collections.emptyMap());
             }
 
             if (userRepository.findByEmail(email) != null) {
@@ -110,14 +110,12 @@ public class AuthController {
             Map<String, String> response = new HashMap<>();
             response.put("token", token);
 
-            return ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .body(response);
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("Error when register : {}", e.getMessage());
             return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("An error occurred during registration.");
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(Collections.emptyMap());
         }
     }
 
@@ -131,13 +129,19 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<?> getUserDetails(Authentication authentication) {
         try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                return ResponseEntity
+                        .status(HttpStatus.UNAUTHORIZED)
+                        .body(Collections.emptyMap());
+            }
+
             String email = authentication.getName();
             User user = userRepository.findByEmail(email);
 
             if (user == null) {
                 return ResponseEntity
-                        .status(HttpStatus.NOT_FOUND)
-                        .body("User not found.");
+                        .status(HttpStatus.UNAUTHORIZED)
+                        .body(Collections.emptyMap());
             }
 
             UserDTO userDTO = userMapper.toDTO(user);
@@ -145,8 +149,8 @@ public class AuthController {
         } catch (Exception e) {
             log.error("Error when recovering user information: {}", e.getMessage());
             return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("An error occurred.");
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(Collections.emptyMap());
         }
     }
 }
