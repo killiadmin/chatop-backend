@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
@@ -43,7 +44,7 @@ public class MessageController {
         try {
             if (messageDTO.getRental_id() == null || messageDTO.getUser_id() == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("message", "User not authenticated !"));
+                        .body(Collections.emptyMap());
             }
 
             Optional<User> userOptional = customUserDetailsService.getUser(Long.valueOf(messageDTO.getUser_id()));
@@ -51,14 +52,14 @@ public class MessageController {
 
             if (userOptional.isEmpty() || rentalOptional.isEmpty()) {
                 return ResponseEntity
-                        .status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("message", "User or Rental not found !"));
+                        .status(HttpStatus.BAD_REQUEST)
+                        .body(Collections.emptyMap());
             }
 
             if (messageDTO.getMessage().isEmpty()) {
                 return ResponseEntity
                         .status(HttpStatus.BAD_REQUEST)
-                        .body(Map.of("message", "Message is empty !"));
+                        .body(Collections.emptyMap());
             }
 
             User user = userOptional.get();
@@ -71,11 +72,11 @@ public class MessageController {
 
             customMessageDetailsService.saveMessage(message);
 
-            return ResponseEntity.ok(Map.of("message", "Message send with success !"));
+            return ResponseEntity.ok(Map.of("message", "Message send with success"));
         } catch (Exception e) {
             return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "Error when creating the message !"));
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(Collections.emptyMap());
         }
     }
 }

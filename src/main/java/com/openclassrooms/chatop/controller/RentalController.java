@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -32,7 +33,13 @@ public class RentalController {
      * @return a ResponseEntity containing a map with a single key "rentals"
      */
     @GetMapping("")
-    public ResponseEntity<Map<String, List<RentalDTO>>> getRentals() {
+    public ResponseEntity<Map<String, List<RentalDTO>>> getRentals(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(Collections.emptyMap());
+        }
+
         List<Rental> rentals = (List<Rental>) customRentalDetailsService.getRentals();
 
         List<RentalDTO> rentalDtos = rentals.stream()
@@ -44,6 +51,7 @@ public class RentalController {
     }
 
 
+
     /**
      * Retrieves the rental details for the specified rental ID.
      *
@@ -51,7 +59,13 @@ public class RentalController {
      * @return a ResponseEntity containing the rental details
      */
     @GetMapping("/{id}")
-    public ResponseEntity<RentalDTO> getRental(@PathVariable Long id) {
+    public ResponseEntity<RentalDTO> getRental(@PathVariable Long id, Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            return ResponseEntity
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(null);
+        }
+
         return customRentalDetailsService.getRental(id)
                 .map(rentalMapper::toDTO)
                 .map(ResponseEntity::ok)
@@ -79,12 +93,18 @@ public class RentalController {
             Authentication authentication
     ) {
         try {
+            if (authentication == null || authentication.getName() == null) {
+                return ResponseEntity
+                        .status(HttpStatus.UNAUTHORIZED)
+                        .body(Collections.emptyMap());
+            }
+
             String email = authentication.getName();
             User currentUser = userRepository.findByEmail(email);
 
             if (currentUser == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("message", "User not authenticated"));
+                        .body(Collections.emptyMap());
             }
 
             Rental rental = new Rental();
@@ -100,11 +120,11 @@ public class RentalController {
 
             customRentalDetailsService.saveRental(rental);
 
-            return ResponseEntity.ok(Map.of("message", "Rental created"));
+            return ResponseEntity.ok(Map.of("message", "Rental created !"));
         } catch (Exception e) {
             return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "Error when creating the rental"));
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(Collections.emptyMap());
         }
     }
 
@@ -131,8 +151,8 @@ public class RentalController {
         try {
             if (authentication == null || authentication.getName() == null) {
                 return ResponseEntity
-                        .status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("message", "Access denied: user is not authenticated"));
+                        .status(HttpStatus.UNAUTHORIZED)
+                        .body(Collections.emptyMap());
             }
 
             String email = authentication.getName();
@@ -141,20 +161,15 @@ public class RentalController {
             if (currentUser == null) {
                 return ResponseEntity
                         .status(HttpStatus.UNAUTHORIZED)
-                        .body(Map.of("message", "User not authenticated"));
+                        .body(Collections.emptyMap());
             }
 
             Rental rental = customRentalDetailsService.getRental(id).orElse(null);
+
             if (rental == null) {
                 return ResponseEntity
-                        .status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("message", "Rental not found"));
-            }
-
-            if (!rental.getOwner().getId().equals(currentUser.getId())) {
-                return ResponseEntity
-                        .status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("message", "You are not allowed to modify this rental"));
+                        .status(HttpStatus.UNAUTHORIZED)
+                        .body(Collections.emptyMap());
             }
 
             rental.setName(name);
@@ -168,8 +183,8 @@ public class RentalController {
                     .ok(Map.of("message", "Rental updated !"));
         } catch (Exception e) {
             return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "Error when updating the rental"));
+                    .status(HttpStatus.UNAUTHORIZED)
+                    .body(Collections.emptyMap());
         }
     }
 }
