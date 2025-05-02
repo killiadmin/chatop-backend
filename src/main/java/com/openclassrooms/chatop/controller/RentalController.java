@@ -1,12 +1,23 @@
 package com.openclassrooms.chatop.controller;
 
 import com.openclassrooms.chatop.dto.RentalDTO;
+
 import com.openclassrooms.chatop.mapper.RentalMapper;
+
 import com.openclassrooms.chatop.model.Rental;
 import com.openclassrooms.chatop.model.User;
+
 import com.openclassrooms.chatop.repository.UserRepository;
 import com.openclassrooms.chatop.service.CustomRentalDetailsService;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -21,17 +32,22 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/rentals")
 @RequiredArgsConstructor
+@Tag(name = "Rentals", description = "Endpoints for managing property rentals")
 public class RentalController {
 
     private final CustomRentalDetailsService customRentalDetailsService;
     private final UserRepository userRepository;
     private final RentalMapper rentalMapper;
 
-    /**
-     * Retrieves the list of all rentals and maps them to their DTO representation.
-     *
-     * @return a ResponseEntity containing a map with a single key "rentals"
-     */
+    @Operation(
+            summary = "Get all rentals",
+            description = "Returns a list of all rentals for authenticated users.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "List of rentals returned",
+                            content = @Content(schema = @Schema(implementation = RentalDTO.class))),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized access", content = @Content)
+            }
+    )
     @GetMapping("")
     public ResponseEntity<Map<String, List<RentalDTO>>> getRentals(Authentication authentication) {
         if (authentication == null || authentication.getName() == null) {
@@ -51,13 +67,16 @@ public class RentalController {
     }
 
 
-
-    /**
-     * Retrieves the rental details for the specified rental ID.
-     *
-     * @param id the ID of the rental to retrieve
-     * @return a ResponseEntity containing the rental details
-     */
+    @Operation(
+            summary = "Get a rental by ID",
+            description = "Fetches rental details by its ID for authenticated users.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Rental found",
+                            content = @Content(schema = @Schema(implementation = RentalDTO.class))),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized access", content = @Content),
+                    @ApiResponse(responseCode = "404", description = "Rental not found", content = @Content)
+            }
+    )
     @GetMapping("/{id}")
     public ResponseEntity<RentalDTO> getRental(@PathVariable Long id, Authentication authentication) {
         if (authentication == null || authentication.getName() == null) {
@@ -72,17 +91,14 @@ public class RentalController {
                 .orElse(ResponseEntity.status(HttpStatus.NOT_FOUND).body(null));
     }
 
-    /**
-     * Creates a new rental and associates it with the authenticated user.
-     *
-     * @param name the name of the rental
-     * @param surface the surface area of the rental in square meters
-     * @param price the price of the rental
-     * @param description a description of the rental
-     * @param picture an optional picture file for the rental
-     * @param authentication the authentication object containing the credentials of the current user
-     * @return a ResponseEntity with a message indicating success or failure, and appropriate HTTP status
-     */
+    @Operation(
+            summary = "Create a new rental",
+            description = "Creates a new rental property and associates it with the authenticated user.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Rental created successfully"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized or invalid request", content = @Content)
+            }
+    )
     @PostMapping("")
     public ResponseEntity<Map<String, String>> createRental(
             @RequestParam("name") String name,
@@ -128,17 +144,14 @@ public class RentalController {
         }
     }
 
-    /**
-     * Updates an existing rental with the specified details.
-     *
-     * @param id the ID of the rental to update
-     * @param name the new name of the rental
-     * @param surface the new surface area of the rental in square meters
-     * @param price the new price of the rental
-     * @param description the new description of the rental
-     * @param authentication the authentication object containing the credentials of the current user
-     * @return a ResponseEntity containing a map
-     */
+    @Operation(
+            summary = "Update an existing rental",
+            description = "Updates the rental information of a rental owned by the authenticated user.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Rental updated successfully"),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized or rental not found", content = @Content)
+            }
+    )
     @PutMapping("/{id}")
     public ResponseEntity<Map<String, String>> updateRental(
             @PathVariable Long id,

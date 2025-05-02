@@ -1,7 +1,15 @@
 package com.openclassrooms.chatop.controller;
 
 import com.openclassrooms.chatop.dto.UserDTO;
+
 import com.openclassrooms.chatop.mapper.UserMapper;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
@@ -21,16 +29,21 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/user")
 @RequiredArgsConstructor
+@Tag(name = "Users", description = "Endpoints related to user data")
 public class UserController {
 
     private final CustomUserDetailsService customUserDetailsService;
     private final UserMapper userMapper;
 
-    /**
-     * Retrieves a user by their unique identifier.
-     *
-     * @param id the unique identifier of the user
-     */
+    @Operation(
+            summary = "Get user by ID",
+            description = "Retrieves a user's details by their unique ID. Requires authentication.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "User found", content = @Content(schema = @Schema(implementation = UserDTO.class))),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
+                    @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
+            }
+    )
     @GetMapping("/{id}")
     public ResponseEntity<UserDTO> getUserById(@PathVariable Long id) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

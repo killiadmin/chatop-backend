@@ -1,14 +1,17 @@
 package com.openclassrooms.chatop.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-/**
- * Data Transfer Object (DTO) for handling message-related data.
- * It encapsulates the details of a message, including the rental ID, user ID, and message content.
- */
 @Data
 public class MessageDTO {
+
+    @Schema(description = "ID of the rental", example = "1")
     private Integer rental_id;
+
+    @Schema(description = "ID of the user sending the message", example = "42")
     private Integer user_id;
+
+    @Schema(description = "The content of the message", example = "Hello, I’m interested in this rental.")
     private String message;
 }

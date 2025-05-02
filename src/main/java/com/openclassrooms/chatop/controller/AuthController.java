@@ -8,6 +8,11 @@ import com.openclassrooms.chatop.mapper.UserMapper;
 import com.openclassrooms.chatop.model.User;
 import com.openclassrooms.chatop.repository.UserRepository;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +36,7 @@ import java.util.Map;
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Authentication", description = "Endpoints for user authentication and registration")
 public class AuthController {
 
     private final JwtUtils jwtUtils;
@@ -39,13 +45,18 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
 
-    /**
-     * Authenticates a user using the provided credentials and generates a JWT token upon successful authentication.
-     *
-     * @param loginDTO the login data transfer object containing the user's email and password for authentication.
-     *
-     * @return a {@code ResponseEntity}
-     */
+    @Operation(
+            summary = "Login a user",
+            description = "Authenticate a user using email and password and returns a JWT token.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = LoginDTO.class))
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Login successful"),
+                    @ApiResponse(responseCode = "401", description = "Invalid credentials", content = @Content)
+            }
+    )
     @PostMapping("/login")
     public ResponseEntity<Map<String, String>> login(@Valid @RequestBody LoginDTO loginDTO) {
         try {
@@ -67,13 +78,19 @@ public class AuthController {
         }
     }
 
-    /**
-     * Handles the user registration process by validating the input.
-     *
-     * @param request the registration data containing email, password, and name, provided as a {@code RegisterDTO}.
-     *                Must be a valid and non-null object.
-     * @return a {@code ResponseEntity}
-     */
+    @Operation(
+            summary = "Register a new user",
+            description = "Creates a new user account and returns a JWT token upon successful registration.",
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = RegisterDTO.class))
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Registration successful"),
+                    @ApiResponse(responseCode = "400", description = "Invalid input", content = @Content),
+                    @ApiResponse(responseCode = "409", description = "User already exists", content = @Content)
+            }
+    )
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterDTO request) {
         try {
@@ -119,13 +136,14 @@ public class AuthController {
         }
     }
 
-    /**
-     * Retrieves the details of the currently authenticated user.
-     *
-     * @param authentication the authentication object containing the current user's information.
-     *
-     * @return a {@code ResponseEntity}
-     */
+    @Operation(
+            summary = "Get authenticated user",
+            description = "Retrieves the details of the currently authenticated user.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "User found", content = @Content(schema = @Schema(implementation = UserDTO.class))),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
+            }
+    )
     @GetMapping("/me")
     public ResponseEntity<?> getUserDetails(Authentication authentication) {
         try {

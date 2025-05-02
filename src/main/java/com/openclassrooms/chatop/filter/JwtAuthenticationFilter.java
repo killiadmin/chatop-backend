@@ -16,6 +16,7 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
 
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -25,9 +26,13 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtDecoder jwtDecoder;
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     private static final List<String> EXCLUDED_PATHS = List.of(
-            "/api/auth/login", "/api/auth/register"
+            "/api/auth/login",
+            "/api/auth/register",
+            "/swagger-ui/**",
+            "/v3/api-docs/**"
     );
 
     public JwtAuthenticationFilter(JwtDecoder jwtDecoder) {
@@ -36,7 +41,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return EXCLUDED_PATHS.contains(request.getRequestURI());
+        String path = request.getRequestURI();
+        return EXCLUDED_PATHS.stream().anyMatch(pattern -> pathMatcher.match(pattern, path));
     }
 
     @Override

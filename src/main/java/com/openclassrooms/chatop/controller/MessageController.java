@@ -10,6 +10,11 @@ import com.openclassrooms.chatop.service.CustomMessageDetailsService;
 import com.openclassrooms.chatop.service.CustomRentalDetailsService;
 import com.openclassrooms.chatop.service.CustomUserDetailsService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpStatus;
@@ -24,19 +29,22 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/messages")
 @RequiredArgsConstructor
+@Tag(name = "Messages", description = "Endpoints for sending messages related to rentals")
 public class MessageController {
 
     private final CustomUserDetailsService customUserDetailsService;
     private final CustomRentalDetailsService customRentalDetailsService;
     private final CustomMessageDetailsService customMessageDetailsService;
 
-    /**
-     * Handles the creation of a new message using the provided message data.
-     *
-     * @param messageDTO the data transfer object containing the message details,
-     *                   including rental ID, user ID, and the message content
-     * @return a ResponseEntity containing a map with a status message
-     */
+    @Operation(
+            summary = "Send a message",
+            description = "Creates and sends a message from a user regarding a rental.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Message sent successfully"),
+                    @ApiResponse(responseCode = "400", description = "Bad request (missing fields or invalid data)", content = @Content),
+                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
+            }
+    )
     @PostMapping("")
     public ResponseEntity<Map<String, String>> createMessage(
             @RequestBody MessageDTO messageDTO
