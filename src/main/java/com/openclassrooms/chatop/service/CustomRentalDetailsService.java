@@ -27,10 +27,6 @@ public class CustomRentalDetailsService {
         rentalRepository.save(rental);
     }
 
-    public void deleteRental(final Long id) {
-        rentalRepository.deleteById(id);
-    }
-
     public void saveRental(Rental rental) {
         rentalRepository.save(rental);
     }

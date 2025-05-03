@@ -23,12 +23,19 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
+    /**
+     * Loads a user's authentication details by their email.
+     *
+     * @param email the email of the user whose authentication details are to be loaded
+     * @return UserDetails object containing the user's information including username, password, and roles
+     * @throws UsernameNotFoundException if no user is found with the given email
+     */
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         com.openclassrooms.chatop.model.User user = userRepository.findByEmail(email);
 
         if (user == null) {
-            throw new UsernameNotFoundException("Utilisateur introuvable avec l'email : " + email);
+            throw new UsernameNotFoundException("User not found with email : " + email);
         }
 
         return org.springframework.security.core.userdetails.User
@@ -38,27 +45,13 @@ public class CustomUserDetailsService implements UserDetailsService {
                 .build();
     }
 
+    /**
+     * Retrieves a user by their unique identifier.
+     *
+     * @param id the unique identifier of the user to be retrieved
+     * @return an Optional containing the User if found, or an empty Optional if no user is found with the given id
+     */
     public Optional<User> getUser(final Long id) {
-
         return userRepository.findById(id);
-
-    }
-
-    public Iterable<User> getUsers() {
-
-        return userRepository.findAll();
-
-    }
-
-    public void deleteUser(final Long id) {
-
-        userRepository.deleteById(id);
-
-    }
-
-    public User saveUser(User employee) {
-
-        return userRepository.save(employee);
-
     }
 }

@@ -21,10 +21,23 @@ public class JwtUtils {
     @Value("${app.jwt.expiration}")
     private long jwtExpirationInSeconds;
 
+
+    /**
+     * Constructs a new instance of JwtUtils with the provided JwtEncoder.
+     *
+     * @param jwtEncoder the JwtEncoder instance used for encoding JWT tokens
+     */
     public JwtUtils(JwtEncoder jwtEncoder) {
         this.jwtEncoder = jwtEncoder;
     }
 
+
+    /**
+     * Generates a JWT token for a given authentication object.
+     *
+     * @param authentication the authentication object containing user details
+     * @return a signed JWT token as a string
+     */
     public String generateToken(Authentication authentication) {
         Instant now = Instant.now();
 

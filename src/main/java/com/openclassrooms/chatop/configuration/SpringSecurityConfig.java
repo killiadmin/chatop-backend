@@ -39,16 +39,35 @@ import javax.crypto.spec.SecretKeySpec;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SpringSecurityConfig {
+
     private final CustomUserDetailsService customUserDetailsService;
 
     @Value("${app.secret-key}")
     private String jwtKey;
 
+    /**
+     * Creates and provides a BCryptPasswordEncoder bean that can be used for password encoding.
+     *
+     * @return a new instance of BCryptPasswordEncoder
+     */
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
+    /**
+     * Configures the security filter chain for the application, disabling CSRF protection,
+     * enforcing stateless sessions, specifying authenticated and public endpoints,
+     * adding a custom authentication filter, and setting up a custom authentication entry point.
+     *
+     * @param http                     the {@link HttpSecurity} object used to customize
+     *                                 web security configurations
+     * @param jwtAuthenticationFilter  the filter that handles JWT authentication logic
+     * @param authenticationEntryPoint the custom entry point invoked when an
+     *                                 unauthorized access attempt occurs
+     * @return the configured {@link SecurityFilterChain} instance
+     * @throws Exception if an error occurs during configuration
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
@@ -75,17 +94,33 @@ public class SpringSecurityConfig {
         return http.build();
     }
 
+    /**
+     * Provides a JwtDecoder bean configured to decode JWT tokens using a secret key.
+     * This decoder will validate and process incoming JWT tokens.
+     *
+     * @return an instance of {@link JwtDecoder} configured to decode JWT tokens
+     */
     @Bean
     public JwtDecoder jwtDecoder() {
         SecretKeySpec secretKey = new SecretKeySpec(jwtKey.getBytes(), "HmacSHA256");
         return NimbusJwtDecoder.withSecretKey(secretKey).macAlgorithm(MacAlgorithm.HS256).build();
     }
 
+    /**
+     * Provides a JwtEncoder bean configured to encode JWT tokens using a secret key.
+     *
+     * @return an instance of {@link JwtEncoder} configured for encoding JWT tokens
+     */
     @Bean
     public JwtEncoder jwtEncoder() {
         return new NimbusJwtEncoder(new ImmutableSecret<>(this.jwtKey.getBytes()));
     }
 
+    /**
+     * Provides a configured {@link AuthenticationManager} bean that uses a {@link DaoAuthenticationProvider}.
+     *
+     * @return an instance of {@link AuthenticationManager} configured with the specified authentication provider
+     */
     @Bean
     public AuthenticationManager authenticationManager() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -95,6 +130,12 @@ public class SpringSecurityConfig {
         return new ProviderManager(authProvider);
     }
 
+    /**
+     * Provides a {@link JwtAuthenticationFilter} bean for handling JWT authentication.
+     *
+     * @param jwtDecoder the {@link JwtDecoder} used to decode and validate JWT tokens
+     * @return an instance of {@link JwtAuthenticationFilter} configured with the provided {@link JwtDecoder}
+     */
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter(JwtDecoder jwtDecoder) {
         return new JwtAuthenticationFilter(jwtDecoder);
