@@ -39,11 +39,13 @@ import java.util.Map;
 @Tag(name = "Authentication", description = "Endpoints for user authentication and registration")
 public class AuthController {
 
+
     private final JwtUtils jwtUtils;
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
+
 
     @Operation(
             summary = "Login a user",
@@ -78,6 +80,7 @@ public class AuthController {
         }
     }
 
+
     @Operation(
             summary = "Register a new user",
             description = "Creates a new user account and returns a JWT token upon successful registration.",
@@ -88,7 +91,6 @@ public class AuthController {
             responses = {
                     @ApiResponse(responseCode = "200", description = "Registration successful"),
                     @ApiResponse(responseCode = "400", description = "Invalid input", content = @Content),
-                    @ApiResponse(responseCode = "409", description = "User already exists", content = @Content)
             }
     )
     @PostMapping("/register")
@@ -98,16 +100,10 @@ public class AuthController {
             String password = request.getPassword();
             String name = request.getName();
 
-            if (email == null || email.trim().isEmpty() || password == null || password.trim().isEmpty() || name == null || name.trim().isEmpty()) {
+            if (email.trim().isEmpty() || password.trim().isEmpty() || name.trim().isEmpty() || userRepository.findByEmail(email) != null) {
                 return ResponseEntity
                         .status(HttpStatus.BAD_REQUEST)
                         .body(Collections.emptyMap());
-            }
-
-            if (userRepository.findByEmail(email) != null) {
-                return ResponseEntity
-                        .status(HttpStatus.CONFLICT)
-                        .body("A user with this email already exists !");
             }
 
             String encodedPassword = passwordEncoder.encode(password);
@@ -135,6 +131,7 @@ public class AuthController {
                     .body(Collections.emptyMap());
         }
     }
+
 
     @Operation(
             summary = "Get authenticated user",

@@ -32,9 +32,11 @@ import java.util.Optional;
 @Tag(name = "Messages", description = "Endpoints for sending messages related to rentals")
 public class MessageController {
 
+
     private final CustomUserDetailsService customUserDetailsService;
     private final CustomRentalDetailsService customRentalDetailsService;
     private final CustomMessageDetailsService customMessageDetailsService;
+
 
     @Operation(
             summary = "Send a message",
@@ -42,7 +44,7 @@ public class MessageController {
             responses = {
                     @ApiResponse(responseCode = "200", description = "Message sent successfully"),
                     @ApiResponse(responseCode = "400", description = "Bad request (missing fields or invalid data)", content = @Content),
-                    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
+                    @ApiResponse(responseCode = "401", description = "Unauthorized")
             }
     )
     @PostMapping("")
@@ -51,8 +53,7 @@ public class MessageController {
     ) {
         try {
             if (messageDTO.getRental_id() == null || messageDTO.getUser_id() == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(Collections.emptyMap());
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
 
             Optional<User> userOptional = customUserDetailsService.getUser(Long.valueOf(messageDTO.getUser_id()));

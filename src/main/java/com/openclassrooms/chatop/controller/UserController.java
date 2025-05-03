@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -32,8 +33,10 @@ import java.util.Optional;
 @Tag(name = "Users", description = "Endpoints related to user data")
 public class UserController {
 
+
     private final CustomUserDetailsService customUserDetailsService;
     private final UserMapper userMapper;
+
 
     @Operation(
             summary = "Get user by ID",
@@ -41,7 +44,6 @@ public class UserController {
             responses = {
                     @ApiResponse(responseCode = "200", description = "User found", content = @Content(schema = @Schema(implementation = UserDTO.class))),
                     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content),
-                    @ApiResponse(responseCode = "404", description = "User not found", content = @Content)
             }
     )
     @GetMapping("/{id}")
@@ -49,7 +51,7 @@ public class UserController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated() || authentication instanceof AnonymousAuthenticationToken) {
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
         Optional<User> optionalUser = customUserDetailsService.getUser(id);
@@ -58,7 +60,7 @@ public class UserController {
             UserDTO userDTO = userMapper.toDTO(optionalUser.get());
             return ResponseEntity.ok(userDTO);
         } else {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
     }
 }
