@@ -38,6 +38,9 @@ CREATE TABLE users
     updated_at TIMESTAMP                    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP NOT NULL
 );
 
+INSERT INTO users (name, email, password, role)
+VALUES ('John Doe', 'john.doe@example.com', '$2y$10$3Obq7zsgh/sKG.mPhyAaoOGhv4sYRl6ayS8/ZLnafvJOCYMeKC5.i', 'USER');
+
 CREATE TABLE rentals
 (
     id          BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -131,7 +134,7 @@ spring.mvc.pathmatch.matching-strategy=ant-path-matcher
 springdoc.swagger-ui.enabled=true
 ```
 
-2. Run the application `mvn spring-boot:run` in the project directory.
+2. Run the application `./mvn spring-boot:run` in the project directory.
 
 3. Access the Swagger URL to explore. `http://localhost:3001/swagger-ui/index.html`
 
