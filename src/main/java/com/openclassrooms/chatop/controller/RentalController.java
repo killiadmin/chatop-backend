@@ -52,7 +52,9 @@ public class RentalController {
     )
     @GetMapping("")
     public ResponseEntity<Map<String, List<RentalDTO>>> getRentals(Authentication authentication) {
-        if (authentication == null || authentication.getName() == null) {
+        User currentUser = getAuthenticatedUser(authentication);
+
+        if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
@@ -78,7 +80,9 @@ public class RentalController {
     )
     @GetMapping("/{id}")
     public ResponseEntity<RentalDTO> getRental(@PathVariable Long id, Authentication authentication) {
-        if (authentication == null || authentication.getName() == null) {
+        User currentUser = getAuthenticatedUser(authentication);
+
+        if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
 
@@ -107,12 +111,7 @@ public class RentalController {
             Authentication authentication
     ) {
         try {
-            if (authentication == null || authentication.getName() == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-
-            String email = authentication.getName();
-            User currentUser = userRepository.findByEmail(email);
+            User currentUser = getAuthenticatedUser(authentication);
 
             if (currentUser == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -156,13 +155,8 @@ public class RentalController {
             Authentication authentication
     ) {
         try {
-            if (authentication == null || authentication.getName() == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
+            User currentUser = getAuthenticatedUser(authentication);
 
-            String email = authentication.getName();
-
-            User currentUser = userRepository.findByEmail(email);
             if (currentUser == null) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
             }
@@ -185,5 +179,19 @@ public class RentalController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+    }
+
+    /**
+     * Retrieves the authenticated user based on the provided authentication object.
+     *
+     * @param authentication the authentication object containing user information
+     * @return the authenticated User object, or null if authentication is invalid
+     */
+    private User getAuthenticatedUser(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            return null;
+        }
+
+        return userRepository.findByEmail(authentication.getName());
     }
 }
