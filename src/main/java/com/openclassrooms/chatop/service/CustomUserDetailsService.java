@@ -2,6 +2,8 @@ package com.openclassrooms.chatop.service;
 
 import java.util.Optional;
 
+import com.openclassrooms.chatop.dto.UserDTO;
+import com.openclassrooms.chatop.exception.UnauthorizedException;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.security.core.userdetails.UserDetails;
@@ -53,5 +55,35 @@ public class CustomUserDetailsService implements UserDetailsService {
      */
     public Optional<User> getUser(final Long id) {
         return userRepository.findById(id);
+    }
+
+    /**
+     * Retrieves a user by their unique identifier
+     *
+     * @param id the unique identifier of the user to be retrieved
+     * @return a UserDTO object containing the user's details
+     * @throws UnauthorizedException if no user is found with the given id
+     */
+    public UserDTO getUserById(Long id) {
+        return getUser(id)
+                .map(this::mapToDTO)
+                .orElseThrow(() -> new UnauthorizedException("User not found !"));
+    }
+
+    /**
+     * Maps a User model
+     *
+     * @param user the User model to be mapped
+     * @return a UserDTO object containing the details of the user
+     */
+    private UserDTO mapToDTO(User user) {
+        return UserDTO.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .created_at(user.getCreated_at())
+                .updated_at(user.getUpdated_at())
+                .build();
     }
 }
