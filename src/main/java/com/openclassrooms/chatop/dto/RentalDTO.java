@@ -1,12 +1,19 @@
 package com.openclassrooms.chatop.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class RentalDTO {
 
     @Schema(description = "Unique identifier of the rental", example = "5")

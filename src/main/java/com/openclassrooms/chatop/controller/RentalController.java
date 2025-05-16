@@ -2,12 +2,9 @@ package com.openclassrooms.chatop.controller;
 
 import com.openclassrooms.chatop.dto.RentalDTO;
 
-import com.openclassrooms.chatop.mapper.RentalMapper;
-
+import com.openclassrooms.chatop.dto.RentalListDto;
 import com.openclassrooms.chatop.model.Rental;
-import com.openclassrooms.chatop.model.User;
 
-import com.openclassrooms.chatop.repository.UserRepository;
 import com.openclassrooms.chatop.service.CustomRentalDetailsService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -18,16 +15,17 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/rentals")
@@ -37,8 +35,6 @@ public class RentalController {
 
 
     private final CustomRentalDetailsService customRentalDetailsService;
-    private final UserRepository userRepository;
-    private final RentalMapper rentalMapper;
 
 
     @Operation(
@@ -51,21 +47,9 @@ public class RentalController {
             }
     )
     @GetMapping("")
-    public ResponseEntity<Map<String, List<RentalDTO>>> getRentals(Authentication authentication) {
-        User currentUser = getAuthenticatedUser(authentication);
-
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        List<Rental> rentals = (List<Rental>) customRentalDetailsService.getRentals();
-
-        List<RentalDTO> rentalDtos = rentals.stream()
-                .map(rentalMapper::toDTO)
-                .toList();
-
-        Map<String, List<RentalDTO>> response = Map.of("rentals", rentalDtos);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<RentalListDto> getAllRentals() {
+        List<Rental> rentals = customRentalDetailsService.getAllRentals();
+        return ResponseEntity.ok(new RentalListDto(rentals));
     }
 
 
@@ -79,17 +63,10 @@ public class RentalController {
             }
     )
     @GetMapping("/{id}")
-    public ResponseEntity<RentalDTO> getRental(@PathVariable Long id, Authentication authentication) {
-        User currentUser = getAuthenticatedUser(authentication);
-
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        return customRentalDetailsService.getRental(id)
-                .map(rentalMapper::toDTO)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
+    public ResponseEntity<Optional<Rental>> getRental(@PathVariable Long id) {
+        Optional<Rental> rental = customRentalDetailsService.getRentalById(id);
+        return ResponseEntity
+                .ok(rental);
     }
 
 
@@ -109,31 +86,10 @@ public class RentalController {
             @RequestParam("description") String description,
             @RequestParam(value = "picture", required = false) MultipartFile picture,
             Authentication authentication
-    ) {
-        try {
-            User currentUser = getAuthenticatedUser(authentication);
+    ) throws IOException {
+        customRentalDetailsService.createRental(name, surface, price, description, picture, authentication.getName());
 
-            if (currentUser == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-
-            Rental rental = new Rental();
-            rental.setName(name);
-            rental.setSurface(surface);
-            rental.setPrice(price);
-            rental.setDescription(description);
-            rental.setOwner(currentUser);
-
-            if (picture != null && !picture.isEmpty()) {
-                rental.setPicture(picture.getBytes());
-            }
-
-            customRentalDetailsService.saveRental(rental);
-
-            return ResponseEntity.ok(Map.of("message", "Rental created !"));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
+        return ResponseEntity.ok(Map.of("message", "Rental created !"));
     }
 
 
@@ -151,47 +107,10 @@ public class RentalController {
             @RequestParam("name") String name,
             @RequestParam("surface") Integer surface,
             @RequestParam("price") BigDecimal price,
-            @RequestParam("description") String description,
-            Authentication authentication
+            @RequestParam("description") String description
     ) {
-        try {
-            User currentUser = getAuthenticatedUser(authentication);
+        customRentalDetailsService.updateRental(id, name, surface, price, description);
 
-            if (currentUser == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-
-            Rental rental = customRentalDetailsService.getRental(id).orElse(null);
-
-            if (rental == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-            }
-
-            rental.setName(name);
-            rental.setSurface(surface);
-            rental.setPrice(price);
-            rental.setDescription(description);
-
-            customRentalDetailsService.updateRental(rental);
-
-            return ResponseEntity
-                    .ok(Map.of("message", "Rental updated !"));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-    }
-
-    /**
-     * Retrieves the authenticated user based on the provided authentication object.
-     *
-     * @param authentication the authentication object containing user information
-     * @return the authenticated User object, or null if authentication is invalid
-     */
-    private User getAuthenticatedUser(Authentication authentication) {
-        if (authentication == null || authentication.getName() == null) {
-            return null;
-        }
-
-        return userRepository.findByEmail(authentication.getName());
+        return ResponseEntity.ok(Map.of("message", "Rental updated !"));
     }
 }
