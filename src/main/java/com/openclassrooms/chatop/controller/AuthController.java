@@ -1,35 +1,29 @@
 package com.openclassrooms.chatop.controller;
 
-import com.openclassrooms.chatop.configuration.JwtUtils;
 import com.openclassrooms.chatop.dto.LoginDTO;
 import com.openclassrooms.chatop.dto.RegisterDTO;
 import com.openclassrooms.chatop.dto.UserDTO;
-import com.openclassrooms.chatop.mapper.UserMapper;
-import com.openclassrooms.chatop.model.User;
-import com.openclassrooms.chatop.repository.UserRepository;
+
+import com.openclassrooms.chatop.exception.UnauthorizedException;
+
+import com.openclassrooms.chatop.service.CustomAuthDetailsService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.validation.Valid;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.crypto.password.PasswordEncoder;
-
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -40,11 +34,7 @@ import java.util.Map;
 public class AuthController {
 
 
-    private final JwtUtils jwtUtils;
-    private final AuthenticationManager authenticationManager;
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final UserMapper userMapper;
+    private final CustomAuthDetailsService customAuthDetailsService;
 
 
     @Operation(
@@ -61,23 +51,9 @@ public class AuthController {
     )
     @PostMapping("/login")
     public ResponseEntity<Map<String, String>> login(@Valid @RequestBody LoginDTO loginDTO) {
-        try {
-            String email = loginDTO.getEmail();
-            String password = loginDTO.getPassword();
+        String token = customAuthDetailsService.authenticateAndGenerateToken(loginDTO);
 
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(email, password)
-            );
-
-            String token = jwtUtils.generateToken(authentication);
-
-            return ResponseEntity.ok(Collections.singletonMap("token", token));
-        } catch (AuthenticationException e) {
-            log.error("Authentication error : {}", e.getMessage());
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "error"));
-        }
+        return ResponseEntity.ok(Collections.singletonMap("token", token));
     }
 
 
@@ -94,42 +70,10 @@ public class AuthController {
             }
     )
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterDTO request) {
-        try {
-            String email = request.getEmail();
-            String password = request.getPassword();
-            String name = request.getName();
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterDTO request) throws Exception {
+        String token = customAuthDetailsService.registerAndGenerateToken(request);
 
-            if (email.trim().isEmpty() || password.trim().isEmpty() || name.trim().isEmpty() || userRepository.findByEmail(email) != null) {
-                return ResponseEntity
-                        .status(HttpStatus.BAD_REQUEST)
-                        .body(Collections.emptyMap());
-            }
-
-            String encodedPassword = passwordEncoder.encode(password);
-
-            User newUser = new User();
-            newUser.setEmail(email);
-            newUser.setPassword(encodedPassword);
-            newUser.setName(name);
-            userRepository.save(newUser);
-
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(email, password)
-            );
-
-            String token = jwtUtils.generateToken(authentication);
-
-            Map<String, String> response = new HashMap<>();
-            response.put("token", token);
-
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            log.error("Error when register : {}", e.getMessage());
-            return ResponseEntity
-                    .status(HttpStatus.BAD_REQUEST)
-                    .body(Collections.emptyMap());
-        }
+        return ResponseEntity.ok(Collections.singletonMap("token", token));
     }
 
 
@@ -143,29 +87,13 @@ public class AuthController {
     )
     @GetMapping("/me")
     public ResponseEntity<?> getUserDetails(Authentication authentication) {
-        try {
-            if (authentication == null || !authentication.isAuthenticated()) {
-                return ResponseEntity
-                        .status(HttpStatus.UNAUTHORIZED)
-                        .body(Collections.emptyMap());
-            }
-
-            String email = authentication.getName();
-            User user = userRepository.findByEmail(email);
-
-            if (user == null) {
-                return ResponseEntity
-                        .status(HttpStatus.UNAUTHORIZED)
-                        .body(Collections.emptyMap());
-            }
-
-            UserDTO userDTO = userMapper.toDTO(user);
-            return ResponseEntity.ok(userDTO);
-        } catch (Exception e) {
-            log.error("Error when recovering user information: {}", e.getMessage());
-            return ResponseEntity
-                    .status(HttpStatus.UNAUTHORIZED)
-                    .body(Collections.emptyMap());
+        if (authentication == null) {
+            throw new UnauthorizedException("User not found !");
         }
+
+        String email = authentication.getName();
+        UserDTO userDTO = customAuthDetailsService.getAuthenticatedMe(email);
+
+        return ResponseEntity.ok(userDTO);
     }
 }
