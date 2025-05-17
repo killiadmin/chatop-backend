@@ -2,8 +2,7 @@ package com.openclassrooms.chatop.controller;
 
 import com.openclassrooms.chatop.dto.RentalDTO;
 
-import com.openclassrooms.chatop.model.Rental;
-
+import com.openclassrooms.chatop.exception.UnauthorizedException;
 import com.openclassrooms.chatop.service.CustomRentalDetailsService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,7 +23,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/rentals")
@@ -63,10 +61,10 @@ public class RentalController {
             }
     )
     @GetMapping("/{id}")
-    public ResponseEntity<Optional<Rental>> getRental(@PathVariable Long id) {
-        Optional<Rental> rental = customRentalDetailsService.getRentalById(id);
-        return ResponseEntity
-                .ok(rental);
+    public ResponseEntity<RentalDTO> getRental(@PathVariable Long id) {
+        return customRentalDetailsService.getRentalById(id)
+                .map(ResponseEntity::ok)
+                .orElseThrow(() -> new UnauthorizedException("Rental not found !"));
     }
 
 

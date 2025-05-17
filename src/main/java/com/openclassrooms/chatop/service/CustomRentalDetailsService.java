@@ -30,47 +30,30 @@ public class CustomRentalDetailsService {
     private final UserRepository userRepository;
 
     /**
-     * Retrieves all rental records from the repository, converts them into
-     * Data Transfer Objects (DTOs), and organizes them into a map.
+     * Retrieves all rental entries
      *
-     * @return single key "rentals", which maps to a list of
-     *         rental data transfer objects ({@link RentalDTO}).
+     * @return a map containing a single entry where the key is "rentals" and the value
+     *         is a list of RentalDTO objects representing all rentals in the system
      */
     public Map<String, List<RentalDTO>> getAllRentals() {
         List<Rental> rentals = findAllRentals();
 
-        List<RentalDTO> rentalDtos = rentals.stream().map(rental -> {
-            RentalDTO dto = new RentalDTO();
-            dto.setId(rental.getId());
-            dto.setName(rental.getName());
-            dto.setSurface(rental.getSurface());
-            dto.setPrice(rental.getPrice());
-            dto.setDescription(rental.getDescription());
-            dto.setOwner_id(rental.getOwner() != null ? rental.getOwner().getId() : null);
-            dto.setCreated_at(rental.getCreated_at());
-            dto.setUpdated_at(rental.getUpdated_at());
-
-            if (rental.getPicture() != null) {
-                String base64Image = Base64.getEncoder().encodeToString(rental.getPicture());
-                dto.setPicture("data:image/jpeg;base64," + base64Image);
-            } else {
-                dto.setPicture(null);
-            }
-
-            return dto;
-        }).toList();
+        List<RentalDTO> rentalDtos = rentals.stream()
+                .map(this::buildRentalDTO)
+                .toList();
 
         return Map.of("rentals", rentalDtos);
     }
 
     /**
-     * Retrieves a rental entity by its unique identifier.
+     * Retrieves a rental by its unique identifier and converts it into a RentalDTO.
      *
-     * @param id the unique identifier of the rental to be retrieved
-     * @return the Rental
+     * @param id the unique identifier of the rental
+     * @return an Optional containing the RentalDTO
      */
-    public Optional<Rental> getRentalById(Long id) {
-        return rentalRepository.findById(id);
+    public Optional<RentalDTO> getRentalById(final Long id) {
+        return rentalRepository.findById(id)
+                .map(this::buildRentalDTO);
     }
 
     /**
@@ -149,5 +132,32 @@ public class CustomRentalDetailsService {
      */
     private List<Rental> findAllRentals() {
         return rentalRepository.findAll();
+    }
+
+    /**
+     * Builds a RentalDTO object from a given Rental model.
+     *
+     * @param rental the Rental model used to build the RentalDTO
+     * @return a RentalDTO object containing the data from the given Rental model
+     */
+    private RentalDTO buildRentalDTO(Rental rental) {
+        RentalDTO dto = new RentalDTO();
+        dto.setId(rental.getId());
+        dto.setName(rental.getName());
+        dto.setSurface(rental.getSurface());
+        dto.setPrice(rental.getPrice());
+        dto.setDescription(rental.getDescription());
+        dto.setOwner_id(rental.getOwner().getId());
+        dto.setCreated_at(rental.getCreated_at());
+        dto.setUpdated_at(rental.getUpdated_at());
+
+        if (rental.getPicture() != null) {
+            String base64Image = Base64.getEncoder().encodeToString(rental.getPicture());
+            dto.setPicture("data:image/jpeg;base64," + base64Image);
+        } else {
+            dto.setPicture(null);
+        }
+
+        return dto;
     }
 }
