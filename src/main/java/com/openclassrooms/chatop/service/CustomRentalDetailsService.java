@@ -1,5 +1,6 @@
 package com.openclassrooms.chatop.service;
 
+import com.openclassrooms.chatop.dto.RentalDTO;
 import com.openclassrooms.chatop.exception.UnauthorizedException;
 import com.openclassrooms.chatop.model.Rental;
 import com.openclassrooms.chatop.model.User;
@@ -14,7 +15,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+
+import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Data
@@ -26,12 +30,37 @@ public class CustomRentalDetailsService {
     private final UserRepository userRepository;
 
     /**
-     * Retrieves a list of all rental entries from the repository.
+     * Retrieves all rental records from the repository, converts them into
+     * Data Transfer Objects (DTOs), and organizes them into a map.
      *
-     * @return a list of all {@link Rental} entities stored in the repository
+     * @return single key "rentals", which maps to a list of
+     *         rental data transfer objects ({@link RentalDTO}).
      */
-    public List<Rental> getAllRentals() {
-        return rentalRepository.findAll();
+    public Map<String, List<RentalDTO>> getAllRentals() {
+        List<Rental> rentals = findAllRentals();
+
+        List<RentalDTO> rentalDtos = rentals.stream().map(rental -> {
+            RentalDTO dto = new RentalDTO();
+            dto.setId(rental.getId());
+            dto.setName(rental.getName());
+            dto.setSurface(rental.getSurface());
+            dto.setPrice(rental.getPrice());
+            dto.setDescription(rental.getDescription());
+            dto.setOwner_id(rental.getOwner() != null ? rental.getOwner().getId() : null);
+            dto.setCreated_at(rental.getCreated_at());
+            dto.setUpdated_at(rental.getUpdated_at());
+
+            if (rental.getPicture() != null) {
+                String base64Image = Base64.getEncoder().encodeToString(rental.getPicture());
+                dto.setPicture("data:image/jpeg;base64," + base64Image);
+            } else {
+                dto.setPicture(null);
+            }
+
+            return dto;
+        }).toList();
+
+        return Map.of("rentals", rentalDtos);
     }
 
     /**
@@ -111,5 +140,14 @@ public class CustomRentalDetailsService {
      */
     public Optional<Rental> getRental(final Long id) {
         return rentalRepository.findById(id);
+    }
+
+    /**
+     * Retrieves a list of all rental entries from the repository.
+     *
+     * @return a list of all {@link Rental} entities stored in the repository
+     */
+    private List<Rental> findAllRentals() {
+        return rentalRepository.findAll();
     }
 }

@@ -2,7 +2,6 @@ package com.openclassrooms.chatop.controller;
 
 import com.openclassrooms.chatop.dto.RentalDTO;
 
-import com.openclassrooms.chatop.dto.RentalListDto;
 import com.openclassrooms.chatop.model.Rental;
 
 import com.openclassrooms.chatop.service.CustomRentalDetailsService;
@@ -47,9 +46,10 @@ public class RentalController {
             }
     )
     @GetMapping("")
-    public ResponseEntity<RentalListDto> getAllRentals() {
-        List<Rental> rentals = customRentalDetailsService.getAllRentals();
-        return ResponseEntity.ok(new RentalListDto(rentals));
+    public ResponseEntity<Map<String, List<RentalDTO>>> getAllRentals() {
+        Map<String, List<RentalDTO>> response = customRentalDetailsService.getAllRentals();
+
+        return ResponseEntity.ok(response);
     }
 
 

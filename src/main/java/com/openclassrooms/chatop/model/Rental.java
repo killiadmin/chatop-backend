@@ -53,21 +53,4 @@ public class Rental {
     @Column(name = "updated_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP", nullable = false)
     @UpdateTimestamp
     private LocalDateTime updated_at;
-
-    /**
-     * Retrieves the ID of the owner associated with this rental.
-     *
-     * @return the ID of the owner, or null if no owner is set
-     */
-    public Long getOwnerId() {
-        return this.owner != null ? this.owner.getId() : null;
-    }
-
-    public Object getCreatedAt() {
-        return this.created_at;
-    }
-
-    public Object getUpdatedAt() {
-        return this.updated_at;
-    }
 }
