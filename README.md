@@ -74,64 +74,27 @@ CREATE TABLE messages
 
 1. `git clone https://github.com/killiadmin/chatop-backend.git`
 
-**Set up the `application.properties` file:**
+**Set up the `application.properties` file with `.env` file :**
 
-Once you have cloned the repository, you'll need to add the `application.properties` file on the `src/main/resources/` folder containing these properties:
+Once you have cloned the repository, create your `.env` file at the project root
 
-```properties
-# ==========================
+You'll need to implementation of sensitive information to power the `resource/application.properties` in your `.env` file
+
+.env.example : 
+```
 # Application information
-# ==========================
-spring.application.name=your-application-name
+SPRING_APPLICATION_NAME=
 
-# ==========================
 # Server configuration
-# ==========================
-server.port=8080
+SERVER_PORT=
 
-# ==========================
 # Database configuration
-# ==========================
-spring.datasource.url=jdbc:mysql://<DB_HOST>:<DB_PORT>/<DB_NAME>
-spring.datasource.username=<DB_USERNAME>
-spring.datasource.password=<DB_PASSWORD>
-spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
-spring.sql.init.platform=mysql
+SPRING_DATASOURCE_URL=
+SPRING_DATASOURCE_USERNAME=
+SPRING_DATASOURCE_PASSWORD=
 
-# ==========================
-# Configuration to JPA (Java Persistence API)
-# ==========================
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
-spring.jpa.properties.hibernate.format_sql=true
-spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.MySQL8Dialect
-
-# ==========================
-# Logs Configuration
-# ==========================
-logging.level.root=INFO
-logging.level.com.yourcompany=DEBUG
-
-# ==========================
-# Console H2 (for development only)
-# ==========================
-spring.h2.console.enabled=true
-
-# ==========================
 # App configuration
-# ==========================
-app.secret-key=<YOUR_RANDOM_SECRET_KEY>
-app.jwt.expiration=3600
-
-# ==========================
-# Spring MVC configuration
-# ==========================
-spring.mvc.pathmatch.matching-strategy=ant-path-matcher
-
-# ==========================
-# Swagger
-# ==========================
-springdoc.swagger-ui.enabled=true
+APP_SECRET_KEY=
 ```
 
 2. Run the application `./mvn spring-boot:run` in the project directory.
